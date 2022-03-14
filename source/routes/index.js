@@ -1,7 +1,7 @@
 const homeRoute = require('./homeRoute.js')
 
 const route = app => {
-    app.get('/', homeRoute)
+    app.use('/', homeRoute)
 }
 
 module.exports = route

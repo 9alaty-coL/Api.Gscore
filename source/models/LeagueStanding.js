@@ -1,0 +1,11 @@
+const mongoose = require('mongoose')
+const {Schema} = mongoose
+
+const leagueStanding = new Schema({
+    leagueId: String,
+    data: Object,
+})
+
+const LeaderBoad = mongoose.model('LeaderBoard', leagueStanding)
+
+module.exports = LeaderBoad
