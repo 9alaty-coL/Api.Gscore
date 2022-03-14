@@ -22,8 +22,8 @@ class homeController{
                 data: realtimeData.data,
             })
         } catch (error) {
-            console.log(error.message)
-            if (error.status != 429){
+            console.log(error.response.status)
+            if (error.response.status != 429){
                 return res.json({
                     error: {
                         status: error.response.status,
@@ -55,8 +55,8 @@ class homeController{
                 data: realtimeData.data,
             })
         } catch (error) {
-            console.log(error.message)
-            if (error.status != 429){
+            console.log(error.response.status)
+            if (error.response.status !== 429){
                 return res.json({
                     error: {
                         status: error.response.status,
