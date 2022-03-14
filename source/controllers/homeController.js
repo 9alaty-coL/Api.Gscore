@@ -39,7 +39,7 @@ class homeController{
         
         // const response = await JSON.parse(data)
 
-        return res.json(data.data)
+        return res.json(data?.data)
     }
 
     async topScorer(req, res, next) {
