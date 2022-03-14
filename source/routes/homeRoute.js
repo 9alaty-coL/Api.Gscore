@@ -5,6 +5,8 @@ const homeController = require('../controllers/homeController')
 
 router.get('/standing/:leagueId', homeController.leaderBoard)
 
+router.get('/scorer/:leagueId', homeController.topScorer)
+
 router.get('/', homeController.home)
 
 module.exports = router
