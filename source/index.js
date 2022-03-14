@@ -6,8 +6,8 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 //  Enable CORS on Server
-// let cors = require("cors");
-// app.use(cors());
+let cors = require("cors");
+app.use(cors());
 
 //router
 const route = require("./routes/index");
