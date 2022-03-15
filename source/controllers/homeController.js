@@ -1,79 +1,138 @@
-const LeaderBoard = require('../models/LeagueStanding')
-const TopScorer = require('../models/TopScorer')
-const axios = require('axios')
-const express = require('express')
+const LeaderBoard = require("../models/LeagueStanding");
+const TopScorer = require("../models/TopScorer");
+const Match = require("../models/Match");
+const axios = require("axios");
+const express = require("express");
 
-class homeController{
-    home(req,res,next){
-        res.send('hello')
+class homeController {
+  home(req, res, next) {
+    res.send("hello");
+  }
+
+  async leaderBoard(req, res, next) {
+    try {
+      const realtimeData = await axios({
+        url: `https://api.football-data.org/v2/competitions/${req.params.leagueId}/standings`,
+        headers: {
+          "X-Auth-Token": process.env.API_TOKEN,
+        },
+      });
+
+      await LeaderBoard.updateOne(
+        { leagueId: `${req.params.leagueId}` },
+        {
+          data: realtimeData.data,
+        },
+        { upsert: true, setDefaultsOnInsert: true }
+      );
+    } catch (error) {
+      console.log(error.response.status);
+      if (error.response.status != 429) {
+        return res.json({
+          error: {
+            status: error.response.status,
+            message: error.message,
+          },
+        });
+      }
     }
 
-    async leaderBoard(req, res, next){
+    const data = await LeaderBoard.findOne({
+      leagueId: req.params.leagueId,
+    });
 
+    // const response = await JSON.parse(data)
+
+    return res.json(data?.data);
+  }
+
+  async topScorer(req, res, next) {
+    try {
+      const realtimeData = await axios({
+        url: `https://api.football-data.org/v2/competitions/${req.params.leagueId}/scorers`,
+        headers: {
+          "X-Auth-Token": process.env.API_TOKEN,
+        },
+      });
+
+      await TopScorer.updateOne(
+        { leagueId: `${req.params.leagueId}` },
+        {
+          data: realtimeData.data,
+        },
+        { upsert: true, setDefaultsOnInsert: true }
+      );
+    } catch (error) {
+      console.log(error.response.status);
+      if (error.response.status !== 429) {
+        return res.json({
+          error: {
+            status: error.response.status,
+            message: error.message,
+          },
+        });
+      }
+    }
+
+    const data = await TopScorer.findOne({
+      leagueId: req.params.leagueId,
+    });
+
+    // const response = await JSON.parse(data)
+
+    return res.json(data.data);
+  }
+
+  async match(req, res, next) {
+    const season = req.query.season ?? 2021;
+
+    if (req.query.matchday) {
         try {
-            const realtimeData = await axios({
-                url: `https://api.football-data.org/v2/competitions/${req.params.leagueId}/standings`,
-                headers: {
-                    'X-Auth-Token': process.env.API_TOKEN,
-                }
-            })
-
-            await LeaderBoard.updateOne({leagueId: `${req.params.leagueId}`}, {
-                data: realtimeData.data,
-            })
+            const data = await Match.findOne({
+              leagueId: req.params.leagueId,
+              season: +season,
+            });
+            const matches = data.matches;
+            // res.json(data)
+            const response = matches.filter(
+              (value) =>
+                value.matchday == req.query.matchday ||
+                value.matchday == req.query.matchday + 1
+            );
+            // console.log(matches[0])
+            return res.json(response);
+            
         } catch (error) {
-            console.log(error.response.status)
-            if (error.response.status != 429){
-                return res.json({
-                    error: {
-                        status: error.response.status,
-                        message: error.message,
-                    }
-                })
-            }
+            return res.json(error.message)
         }
-
-        const data = await LeaderBoard.findOne({
-            leagueId: req.params.leagueId,
-        })
-        
-        // const response = await JSON.parse(data)
-
-        return res.json(data?.data)
     }
 
-    async topScorer(req, res, next) {
-        try {
-            const realtimeData = await axios({
-                url: `https://api.football-data.org/v2/competitions/${req.params.leagueId}/scorers`,
-                headers: {
-                    'X-Auth-Token': process.env.API_TOKEN,
-                }
-            })
+    const realtimeData = await axios({
+      url: `https://api.football-data.org/v2/competitions/${req.params.leagueId}/matches`,
+      headers: {
+        "X-Auth-Token": process.env.API_TOKEN,
+      },
+    });
 
-            await TopScorer.updateOne({leagueId: `${req.params.leagueId}`}, {
-                data: realtimeData.data,
-            })
-        } catch (error) {
-            console.log(error.response.status)
-            if (error.response.status !== 429){
-                return res.json({
-                    error: {
-                        status: error.response.status,
-                        message: error.message,
-                    }
-                })
-            }
-        }
+    await Match.updateOne(
+      { leagueId: req.params.leagueId, season: season },
+      {
+        season: season,
+        matches: realtimeData.data.matches,
+        currenMatchday: realtimeData.data.matches[0].currentMatchday,
+      },
+      { upsert: true, setDefaultsOnInsert: true }
+    );
 
-        const data = await TopScorer.findOne({
-            leagueId: req.params.leagueId,
-        })
-        
-        // const response = await JSON.parse(data)
-
-        return res.json(data.data)
-    }
+    const data = await Match.findOne({ leagueId: req.params.leagueId });
+    const matchday = data.matches[0].currentMatchday;
+    const matches = data.matches;
+    const response = matches.filter(
+      (value) =>
+        value.currenMatchday == matchday || value.currenMatchday == matchday + 1
+    );
+    return res.json(response);
+  }
 }
 
-module.exports = new homeController()
+module.exports = new homeController();

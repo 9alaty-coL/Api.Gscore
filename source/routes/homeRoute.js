@@ -7,6 +7,8 @@ router.get('/standing/:leagueId', homeController.leaderBoard)
 
 router.get('/scorer/:leagueId', homeController.topScorer)
 
+router.get('/matches/:leagueId', homeController.match)
+
 router.get('/', homeController.home)
 
 module.exports = router
