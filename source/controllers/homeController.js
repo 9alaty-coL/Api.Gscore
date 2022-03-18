@@ -79,32 +79,51 @@ class homeController {
     });
 
     // const response = await JSON.parse(data)
-
+    
     return res.json(data.data);
   }
-
+  
   async match(req, res, next) {
     const season = req.query.season ?? 2021;
-
+    const teamData = await axios({
+      url: `https://api.football-data.org/v2/competitions/${req.params.leagueId}/standings`,
+      headers: {
+        "X-Auth-Token": process.env.API_TOKEN,
+      },
+    });
+    
+    const getUrl = (id) => {
+      if (teamData) {
+        return teamData.data.standings[0].table.find(
+          (value) => value.team.id === id
+        ).team.crestUrl;
+      }
+      return null;
+    };
     if (req.query.matchday) {
-        try {
-            const data = await Match.findOne({
-              leagueId: req.params.leagueId,
-              season: +season,
-            });
-            const matches = data.matches;
-            // res.json(data)
-            const response = matches.filter(
-              (value) =>
-                value.matchday == req.query.matchday ||
-                value.matchday == req.query.matchday + 1
-            );
-            // console.log(matches[0])
-            return res.json(response);
-            
-        } catch (error) {
-            return res.json(error.message)
-        }
+      try {
+        const data = await Match.findOne({
+          leagueId: req.params.leagueId,
+          season: +season,
+        });
+        const matches = data.matches;
+        // res.json(data)
+        const response = matches.filter(
+          (value) =>
+            value.matchday == req.query.matchday ||
+            value.matchday == req.query.matchday + 1
+        );
+        // console.log(matches[0])
+        response.forEach(
+          (value) => (value.homeTeam.crestUrl = getUrl(value.homeTeam.id))
+        );
+        response.forEach(
+          (value) => (value.awayTeam.crestUrl = getUrl(value.awayTeam.id))
+        );
+        return res.json(response);
+      } catch (error) {
+        return res.json(error.message);
+      }
     }
 
     const realtimeData = await axios({
@@ -114,18 +133,6 @@ class homeController {
       },
     });
 
-    const teamData = await axios({
-      url: `https://api.football-data.org/v2/competitions/${req.params.leagueId}/standings`,
-      headers: {
-        "X-Auth-Token": process.env.API_TOKEN,
-      },
-    });
-    const getUrl = (id) =>{
-      if (teamData){
-          return teamData.data.standings[0].table.find(value => value.team.id === id).team.crestUrl
-      }
-      return null
-  }
 
     // realtimeData.data.matches.forEach(value => value.homeTeam.crestUrl = getUrl(value.homeTeam.id))
     // realtimeData.data.matches.forEach(value => value.awayTeam.crestUrl = getUrl(value.awayTeam.id))
@@ -144,11 +151,14 @@ class homeController {
     const matchday = data.matches[0].season.currentMatchday;
     const matches = data.matches;
     const response = matches.filter(
-      (value) =>
-        value.matchday == matchday || value.matchday == matchday + 1
+      (value) => value.matchday == matchday || value.matchday == matchday + 1
     );
-    response.forEach(value => value.homeTeam.crestUrl = getUrl(value.homeTeam.id))
-    response.forEach(value => value.awayTeam.crestUrl = getUrl(value.awayTeam.id))
+    response.forEach(
+      (value) => (value.homeTeam.crestUrl = getUrl(value.homeTeam.id))
+    );
+    response.forEach(
+      (value) => (value.awayTeam.crestUrl = getUrl(value.awayTeam.id))
+    );
 
     return res.json(response);
   }
