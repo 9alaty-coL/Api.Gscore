@@ -125,11 +125,11 @@ class homeController {
     );
 
     const data = await Match.findOne({ leagueId: req.params.leagueId });
-    const matchday = data.matches[0].currentMatchday;
+    const matchday = data.matches[0].season.currentMatchday;
     const matches = data.matches;
     const response = matches.filter(
       (value) =>
-        value.currenMatchday == matchday || value.currenMatchday == matchday + 1
+        value.matchday == matchday || value.matchday == matchday + 1
     );
     return res.json(response);
   }
