@@ -26,7 +26,7 @@ class homeController {
         { upsert: true, setDefaultsOnInsert: true }
       );
     } catch (error) {
-      console.log(error.response.status);
+      // console.log(error.response.status);
       if (error.response.status != 429) {
         return res.json({
           error: {
@@ -63,7 +63,7 @@ class homeController {
         { upsert: true, setDefaultsOnInsert: true }
       );
     } catch (error) {
-      console.log(error.response.status);
+      // console.log(error.response.status);
       if (error.response.status !== 429) {
         return res.json({
           error: {
@@ -85,12 +85,7 @@ class homeController {
   
   async match(req, res, next) {
     const season = req.query.season ?? 2021;
-    const teamData = await axios({
-      url: `https://api.football-data.org/v2/competitions/${req.params.leagueId}/standings`,
-      headers: {
-        "X-Auth-Token": process.env.API_TOKEN,
-      },
-    });
+    const teamData = await LeaderBoard.findOne({leagueId: req.params.leagueId,})
     
     const getUrl = (id) => {
       if (teamData) {
@@ -126,26 +121,36 @@ class homeController {
       }
     }
 
-    const realtimeData = await axios({
-      url: `https://api.football-data.org/v2/competitions/${req.params.leagueId}/matches`,
-      headers: {
-        "X-Auth-Token": process.env.API_TOKEN,
-      },
-    });
+    try {
+      const realtimeData = await axios({
+        url: `https://api.football-data.org/v2/competitions/${req.params.leagueId}/matches`,
+        headers: {
+          "X-Auth-Token": process.env.API_TOKEN,
+        },
+      });
+  
+      await Match.updateOne(
+        { leagueId: req.params.leagueId, season: season },
+        {
+          season: season,
+          matches: realtimeData.data.matches,
+          currenMatchday: realtimeData.data.matches[0].currentMatchday,
+        },
+        { upsert: true, setDefaultsOnInsert: true }
+      );
+    } catch (error) {
+      // console.log(error.response.status);
+      if (error.response.status != 429) {
+        return res.json({
+          error: {
+            status: error.response.status,
+            message: error.message,
+          },
+        });
+      }
+    }
 
 
-    // realtimeData.data.matches.forEach(value => value.homeTeam.crestUrl = getUrl(value.homeTeam.id))
-    // realtimeData.data.matches.forEach(value => value.awayTeam.crestUrl = getUrl(value.awayTeam.id))
-
-    await Match.updateOne(
-      { leagueId: req.params.leagueId, season: season },
-      {
-        season: season,
-        matches: realtimeData.data.matches,
-        currenMatchday: realtimeData.data.matches[0].currentMatchday,
-      },
-      { upsert: true, setDefaultsOnInsert: true }
-    );
 
     const data = await Match.findOne({ leagueId: req.params.leagueId });
     const matchday = data.matches[0].season.currentMatchday;
