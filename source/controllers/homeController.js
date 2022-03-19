@@ -154,7 +154,7 @@ class homeController {
 
 
     const data = await Match.findOne({ leagueId: req.params.leagueId , season: season});
-    const matchday = data.matches[0].season.currentMatchday;
+    const matchday = query.matchday ?? data.matches[0].season.currentMatchday;
     const matches = data.matches;
     const response = matches.filter(
       (value) => value.matchday == matchday || value.matchday == matchday + 1
