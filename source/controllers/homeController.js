@@ -106,10 +106,9 @@ class homeController {
         // res.json(data)
         const response = matches.filter(
           (value) =>
-            value.matchday == req.query.matchday ||
-            value.matchday == req.query.matchday + 1
+            (value.matchday == req.query.matchday || +value.matchday == +req.query.matchday + 1)
         );
-        // console.log(matches[0])
+        console.log(response.length)
         response.forEach(
           (value) => (value.homeTeam.crestUrl = getUrl(value.homeTeam.id))
         );
