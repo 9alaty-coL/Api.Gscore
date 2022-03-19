@@ -3,6 +3,7 @@ const {Schema} = mongoose
 
 const leagueStanding = new Schema({
     leagueId: String,
+    season: Number,
     data: Object,
 })
 

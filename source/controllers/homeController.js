@@ -10,9 +10,10 @@ class homeController {
   }
 
   async leaderBoard(req, res, next) {
+    const season = req.query.season ?? 2021
     try {
       const realtimeData = await axios({
-        url: `https://api.football-data.org/v2/competitions/${req.params.leagueId}/standings`,
+        url: `https://api.football-data.org/v2/competitions/${req.params.leagueId}/standings?season=2021`,
         headers: {
           "X-Auth-Token": process.env.API_TOKEN,
         },
@@ -91,7 +92,7 @@ class homeController {
       if (teamData) {
         return teamData.data.standings[0].table.find(
           (value) => value.team.id === id
-        ).team.crestUrl;
+        )?.team.crestUrl;
       }
       return null;
     };
@@ -123,7 +124,7 @@ class homeController {
 
     try {
       const realtimeData = await axios({
-        url: `https://api.football-data.org/v2/competitions/${req.params.leagueId}/matches`,
+        url: `https://api.football-data.org/v2/competitions/${req.params.leagueId}/matches?season=${season}`,
         headers: {
           "X-Auth-Token": process.env.API_TOKEN,
         },
@@ -152,14 +153,16 @@ class homeController {
 
 
 
-    const data = await Match.findOne({ leagueId: req.params.leagueId });
+    const data = await Match.findOne({ leagueId: req.params.leagueId , season: season});
     const matchday = data.matches[0].season.currentMatchday;
     const matches = data.matches;
     const response = matches.filter(
       (value) => value.matchday == matchday || value.matchday == matchday + 1
     );
     response.forEach(
-      (value) => (value.homeTeam.crestUrl = getUrl(value.homeTeam.id))
+      (value) =>{
+        return (value.homeTeam.crestUrl = getUrl(value.homeTeam.id))
+      } 
     );
     response.forEach(
       (value) => (value.awayTeam.crestUrl = getUrl(value.awayTeam.id))
