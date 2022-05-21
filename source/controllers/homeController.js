@@ -6,7 +6,7 @@ const express = require("express");
 
 class homeController {
   home(req, res, next) {
-    res.send("hello");
+    res.send("Welcome to Api Gscore!");
   }
 
   async leaderBoard(req, res, next) {
